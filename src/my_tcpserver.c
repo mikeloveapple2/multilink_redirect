@@ -202,10 +202,8 @@ void new_serial_thread()
     puts("init new_serial_thread");
     const char* tmp_path = "/dev/ttyUSB0";
     th_serial_data.baudrate = 57600;
-    printf("path length : %d\n", strlen(tmp_path));
     memset(&th_serial_data.filepath, '\0', strlen(tmp_path));
     memcpy(&th_serial_data.filepath, tmp_path, strlen(tmp_path));
-    printf("after memcpy %s\n", th_serial_data.filepath);
     pthread_create(&th_serial, NULL, serial_thread,  &th_serial_data);
     pthread_detach(th_serial);
 }
