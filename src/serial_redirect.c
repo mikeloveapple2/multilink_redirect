@@ -8,6 +8,7 @@
  */
 
 #include "serial_redirect.h"
+#include "multilink_redirect.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +19,8 @@
 #include <pthread.h>
 
 #define   DEBUG_SERIAL_RECV (1)
+
+extern multilink_data g_multilink_data;
 
 int init_uart(const char* port, int baud)
 {
@@ -157,14 +160,18 @@ void* serial_thread(void* arg)
 
     pthread_setname_np(pthread_self(), "serial_thread");
 
+    printf("in serial_thread p2p_fd: %d\n", g_multilink_data.p2p_fd);
+
     printf("prepare %s, %d\n", serial_path, baudrate);
     int serial_fd = init_uart(serial_path, baudrate);
     if( serial_fd > -1 ){
         // send heartbeat
         // send data_stream
         //
+        g_multilink_data.serial_fd = serial_fd;
         start(serial_fd);
     }else{
+        g_multilink_data.serial_fd = -1;
         perror("init uart error");
     }
 
@@ -185,7 +192,7 @@ void start(int fd)
         FD_ZERO(&fds);				        //清空集合
         FD_SET(_fd, &fds);		            //添加文件描述符入集合
 
-        timeout.tv_sec = 5;		            //设置阻塞超时时间，5秒
+        timeout.tv_sec = 25;		            //设置阻塞超时时间，5秒
         timeout.tv_usec = 0;
         int ret = select(_fd + 1, &fds, NULL, NULL, &timeout);
         switch( ret )
@@ -194,6 +201,7 @@ void start(int fd)
             case -1: {
                          fprintf(stderr, "serial socket select error !\n");
                          run = false;
+                         g_multilink_data.serial_fd = -1;
                          // emit disConnected();
                          break;
                      }
@@ -201,6 +209,7 @@ void start(int fd)
             case 0: {
                         fprintf(stderr, "serial socket select timeout\n");
                         run = false;
+                        g_multilink_data.serial_fd = -1;
                         // emit disConnected();
                         break;
                     }

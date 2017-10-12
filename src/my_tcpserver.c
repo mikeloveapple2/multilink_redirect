@@ -4,6 +4,7 @@
  */
 
 #include "serial_redirect.h"
+#include "multilink_redirect.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -22,6 +23,8 @@
 
 #define DEBUG_SERVER_OUTPUT   (1)
 
+extern multilink_data g_multilink_data;
+
 /*
  * error - wrapper for perror
  */
@@ -30,18 +33,16 @@ void error(char *msg) {
     exit(1);
 }
 
-pthread_t th1;
-pthread_t th_serial;
-serial_data th_serial_data;
+pthread_t g_thread_server;
+pthread_t g_thread_serial;
 
 typedef struct _thread_data {
     int count;
     int fd;
 }thread_data;
 
-void new_serial_thread();
 
-void* th1_func(void* arg)
+void* g_thread_server_func(void* arg)
 {
     thread_data* data = (thread_data*)arg;
     printf("recv count : %d\n", data->count);
@@ -75,12 +76,15 @@ void* th1_func(void* arg)
                               if(read( data->fd , read_buf, 1) > 0){
                                   if(read_buf[0] == 'X'){
                                       puts("recv X command");
-                                      new_serial_thread();
+                                      new_serial_thread("/dev/ttyUSB0", 115200);
                                   }
 #if DEBUG_SERVER_OUTPUT > 0
                                   printf("0x%X ", read_buf[0]);
                                   printf("\n");
                                   fflush(stdout);
+                                  if(g_multilink_data.serial_fd > -1){
+                                      write(g_multilink_data.serial_fd, &read_buf[0], 1);
+                                  }
 #endif
                                   // very important
                               } // read
@@ -92,6 +96,7 @@ void* th1_func(void* arg)
     }// while run
 
     close(data->fd);
+    g_multilink_data.out_fd = -1;
     pthread_exit(NULL);
 }
 
@@ -106,6 +111,8 @@ int main(int argc, char **argv) {
     struct hostent *hostp; /* client host info */
     char *hostaddrp; /* dotted decimal host addr string */
     int optval; /* flag value for setsockopt */
+
+    g_multilink_data.p2p_fd = 42;
 
     /* 
      * check command line arguments 
@@ -173,6 +180,7 @@ int main(int argc, char **argv) {
         if (childfd < 0) 
             error("ERROR on accept");
 
+        g_multilink_data.out_fd = childfd;
         /* 
          * gethostbyaddr: determine who sent the message 
          */
@@ -189,21 +197,11 @@ int main(int argc, char **argv) {
         thread_data data;
         data.count = 5;
         data.fd    = childfd;
-        pthread_create(&th1, NULL, th1_func, &data);
-        pthread_setname_np(th1, "th1_func");
-         // pthread_join(th1, NULL);
-        pthread_detach(th1);
+        pthread_create(&g_thread_server, NULL, g_thread_server_func, &data);
+        pthread_setname_np(g_thread_server, "g_thread_server_func");
+         // pthread_join(g_thread_server, NULL);
+        pthread_detach(g_thread_server);
         fprintf(stderr,"after pthread_detach\n");
     }
 }
 
-void new_serial_thread()
-{
-    puts("init new_serial_thread");
-    const char* tmp_path = "/dev/ttyUSB0";
-    th_serial_data.baudrate = 57600;
-    memset(&th_serial_data.filepath, '\0', strlen(tmp_path));
-    memcpy(&th_serial_data.filepath, tmp_path, strlen(tmp_path));
-    pthread_create(&th_serial, NULL, serial_thread,  &th_serial_data);
-    pthread_detach(th_serial);
-}
