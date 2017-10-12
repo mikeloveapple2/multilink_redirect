@@ -150,7 +150,7 @@ int setup_uart(int fd, int baud)
 
 }
 
-void* serial_thread(void* arg)
+void* serial_thread_func(void* arg)
 {
     serial_data* data = (serial_data*)arg;
     const char* serial_path = data->filepath;
@@ -197,7 +197,7 @@ void start(int fd)
         {
             //错误，断开串口连接
             case -1: {
-                         fprintf(stderr, "serial socket select error !\n");
+                         fprintf(stderr, "serial select error !\n");
                          run = false;
                          multilink->serial_fd = -1;
                          // emit disConnected();
@@ -205,7 +205,7 @@ void start(int fd)
                      }
                      //超时，断开串口连接
             case 0: {
-                        fprintf(stderr, "serial socket select timeout\n");
+                        fprintf(stderr, "serial select timeout\n");
                         run = false;
                         multilink->serial_fd = -1;
                         // emit disConnected();

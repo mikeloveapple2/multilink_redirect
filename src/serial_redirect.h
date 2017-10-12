@@ -11,7 +11,7 @@ int init_uart(const char* port, int baud);
 
 int setup_uart(int fd, int baud);
 
-void* serial_thread(void* arg);
+void* serial_thread_func(void* arg);
 
 void start(int fd);
 

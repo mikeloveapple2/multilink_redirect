@@ -20,7 +20,7 @@ void new_serial_thread(const char* path, int baudrate)
     th_serial_data.baudrate = baudrate;
     memset(&th_serial_data.filepath, '\0', sizeof(&th_serial_data.filepath));
     memcpy(&th_serial_data.filepath, path, strlen(path));
-    pthread_create(&multilink->serial_thread, NULL, serial_thread,  &th_serial_data);
+    pthread_create(&multilink->serial_thread, NULL, serial_thread_func,  &th_serial_data);
     pthread_detach(multilink->serial_thread);
 }
 
@@ -31,7 +31,6 @@ void new_tcp_thread(const char* ip, int port)
     th_tcp_data.port = port;
     memset(&th_tcp_data.address, '\0', sizeof(&th_tcp_data.address));
     memcpy(&th_tcp_data.address, ip, strlen(ip));
-    pthread_create(&multilink->tcp_thread, NULL,   tcp_thread,  &th_tcp_data);
+    pthread_create(&multilink->tcp_thread, NULL,   tcp_thread_func,  &th_tcp_data);
     pthread_detach(multilink->tcp_thread);
-
 }

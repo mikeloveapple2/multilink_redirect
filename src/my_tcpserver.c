@@ -56,13 +56,13 @@ void* server_func(void* arg)
         int ret = select(data->fd + 1, &fds, NULL, NULL, &timeout);
         switch(ret){
             case -1 : {
-                          puts("select -1 disconnect");
+                          puts("server thread select -1 disconnect");
                           run = false;
                           break;
                       }
             case 0 : {
-                         puts("select 0 timeout");
-                         const char* timeout_str = "select timeout!\n";
+                         puts("server thread select 0 timeout");
+                         const char* timeout_str = "server thread select timeout!\n";
                          write(data->fd, timeout_str, strlen(timeout_str));
                          run = false;
                          break;
@@ -73,6 +73,8 @@ void* server_func(void* arg)
                                   if(read_buf[0] == 'X'){
                                       puts("recv X command");
                                       new_serial_thread("/dev/ttyUSB0", 115200);
+                                  }else if(read_buf[0] == 'Z'){
+                                      new_tcp_thread("192.168.192.72", 6667);
                                   }
 #if DEBUG_SERVER_OUTPUT > 0
                                   printf("0x%X ", read_buf[0]);
@@ -82,7 +84,6 @@ void* server_func(void* arg)
                                       write(multilink->serial_fd, &read_buf[0], 1);
                                   }
 #endif
-                                  // very important
                               } // read
                           }
                           break;
