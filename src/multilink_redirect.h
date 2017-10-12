@@ -11,6 +11,7 @@ typedef struct _multilink_data {
 multilink_data g_multilink_data;
 
 void new_serial_thread(const char* path, int baudrate);
+void new_tcp_thread(const char* ip, int port);
 
 #endif  //__MULTILINK_REDIRECT_H__
 

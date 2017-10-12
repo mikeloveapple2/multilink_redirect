@@ -35,6 +35,7 @@ void error(char *msg) {
 
 pthread_t g_thread_server;
 pthread_t g_thread_serial;
+pthread_t g_thread_tcp;
 
 typedef struct _thread_data {
     int count;
