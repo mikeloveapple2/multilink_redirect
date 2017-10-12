@@ -6,7 +6,6 @@ typedef struct _tcp_data {
     int  port;
 } tcp_data;
 
-int tcp_conn(int destport, const char* destip);
 void* tcp_thread_func(void* arg);
 void tcp_start(int fd);
 

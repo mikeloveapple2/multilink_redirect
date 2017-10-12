@@ -16,43 +16,45 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 #define  DEBUG_TCP_RECV  (1)
-
-int tcp_conn(int destport, const char* destip)
-{
-    int sockfd;
-    struct sockaddr_in dest_addr;
-    if( -1 == (sockfd = socket(AF_INET, SOCK_STREAM, 0))){
-        return -1;
-    }
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port   = htons(destport);
-    memset(&dest_addr.sin_zero, 0, sizeof(dest_addr.sin_zero));
-    if(-1 == connect(sockfd, (struct sockaddr*)&dest_addr, sizeof(struct sockaddr))){
-        close(sockfd);
-        return -2;
-    }
-
-    return sockfd;
-}
 
 void* tcp_thread_func(void* arg)
 {
     tcp_data* data   = (tcp_data*)arg;
     const char* addr = data->address;
     int         port = data->port;
+    struct sockaddr_in serveraddr;
 
     pthread_setname_np(pthread_self(), "tcp_thread");
 
-    int sock_fd = tcp_conn(port, addr);
+    int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(sock_fd > -1){
-        get_multilink_data()->tcp_fd = sock_fd;
-        tcp_start(sock_fd);
-        printf("after tcp_start");
+        struct hostent* server;
+
+        server = gethostbyname(addr);
+        if(server == NULL){
+            fprintf(stderr, "ERROR, no such host as %s\n", addr);
+        }else{
+            bzero((char*)&serveraddr, sizeof(serveraddr));
+            serveraddr.sin_family = AF_INET;
+            bcopy((char*)server->h_addr,
+                    (char*)&serveraddr.sin_addr.s_addr,
+                    server->h_length);
+            serveraddr.sin_port = htons(port);
+
+            if(connect(sock_fd, &serveraddr, sizeof(serveraddr)) < 0){
+                fprintf(stderr, "ERROR connecting");
+            }else{
+                get_multilink_data()->tcp_fd = sock_fd;
+                tcp_start(sock_fd);
+                printf("after tcp_start");
+            }
+        }
     }else{
         fprintf(stderr, "connect To %s:%d failed\n", addr, port);
     }
@@ -101,11 +103,16 @@ void tcp_start(int fd)
                                   printf("tcp recv: 0x%X\n", read_buf[0]);
 #endif
                               }else{
-                                  fprintf(stderr, "Nothing to read");
+                                  fprintf(stderr, "noting to read");
                                   run  = false;
                                   multilink->tcp_fd = -1;
                                   close(_fd);
                               }
+                          }else{
+                                  fprintf(stderr, "! FD_ISSET");
+                                  run  = false;
+                                  multilink->tcp_fd = -1;
+                                  close(_fd);
                           }
                           break;
                       } 
