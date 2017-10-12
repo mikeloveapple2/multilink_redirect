@@ -20,8 +20,6 @@
 
 #define   DEBUG_SERIAL_RECV (1)
 
-extern multilink_data g_multilink_data;
-
 int init_uart(const char* port, int baud)
 {
     int fd = open(port, O_RDWR | O_NOCTTY | O_NDELAY);
@@ -160,18 +158,17 @@ void* serial_thread(void* arg)
 
     pthread_setname_np(pthread_self(), "serial_thread");
 
-    printf("in serial_thread p2p_fd: %d\n", g_multilink_data.p2p_fd);
-
     printf("prepare %s, %d\n", serial_path, baudrate);
     int serial_fd = init_uart(serial_path, baudrate);
+    multilink_data* multilink = get_multilink_data();
     if( serial_fd > -1 ){
         // send heartbeat
         // send data_stream
         //
-        g_multilink_data.serial_fd = serial_fd;
+        multilink->serial_fd = serial_fd;
         start(serial_fd);
     }else{
-        g_multilink_data.serial_fd = -1;
+        multilink->serial_fd = -1;
         perror("init uart error");
     }
 
@@ -184,6 +181,7 @@ void start(int fd)
 {
     bool run = true;
     int  _fd = fd;
+    multilink_data* multilink = get_multilink_data();
     while(run){
         // read Serial
         fd_set fds;							//文件描述符集合
@@ -201,7 +199,7 @@ void start(int fd)
             case -1: {
                          fprintf(stderr, "serial socket select error !\n");
                          run = false;
-                         g_multilink_data.serial_fd = -1;
+                         multilink->serial_fd = -1;
                          // emit disConnected();
                          break;
                      }
@@ -209,7 +207,7 @@ void start(int fd)
             case 0: {
                         fprintf(stderr, "serial socket select timeout\n");
                         run = false;
-                        g_multilink_data.serial_fd = -1;
+                        multilink->serial_fd = -1;
                         // emit disConnected();
                         break;
                     }

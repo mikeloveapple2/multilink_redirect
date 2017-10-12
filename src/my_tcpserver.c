@@ -23,8 +23,6 @@
 
 #define DEBUG_SERVER_OUTPUT   (1)
 
-extern multilink_data g_multilink_data;
-
 /*
  * error - wrapper for perror
  */
@@ -33,20 +31,17 @@ void error(char *msg) {
     exit(1);
 }
 
-pthread_t g_thread_server;
-pthread_t g_thread_serial;
-pthread_t g_thread_tcp;
-
 typedef struct _thread_data {
     int count;
     int fd;
 }thread_data;
 
 
-void* g_thread_server_func(void* arg)
+void* server_func(void* arg)
 {
     thread_data* data = (thread_data*)arg;
     printf("recv count : %d\n", data->count);
+    multilink_data* multilink = get_multilink_data();
     
     bool run = true;
     while(run){
@@ -83,8 +78,8 @@ void* g_thread_server_func(void* arg)
                                   printf("0x%X ", read_buf[0]);
                                   printf("\n");
                                   fflush(stdout);
-                                  if(g_multilink_data.serial_fd > -1){
-                                      write(g_multilink_data.serial_fd, &read_buf[0], 1);
+                                  if(multilink->serial_fd > -1){
+                                      write(multilink->serial_fd, &read_buf[0], 1);
                                   }
 #endif
                                   // very important
@@ -97,9 +92,9 @@ void* g_thread_server_func(void* arg)
     }// while run
 
     close(data->fd);
-    g_multilink_data.out_fd = -1;
+    multilink->server_fd = -1;
     pthread_exit(NULL);
-}
+} // server_func
 
 
 int main(int argc, char **argv) {
@@ -113,7 +108,6 @@ int main(int argc, char **argv) {
     char *hostaddrp; /* dotted decimal host addr string */
     int optval; /* flag value for setsockopt */
 
-    g_multilink_data.p2p_fd = 42;
 
     /* 
      * check command line arguments 
@@ -181,7 +175,8 @@ int main(int argc, char **argv) {
         if (childfd < 0) 
             error("ERROR on accept");
 
-        g_multilink_data.out_fd = childfd;
+        multilink_data* multilink = get_multilink_data();
+        multilink->server_fd = childfd;
         /* 
          * gethostbyaddr: determine who sent the message 
          */
@@ -198,10 +193,10 @@ int main(int argc, char **argv) {
         thread_data data;
         data.count = 5;
         data.fd    = childfd;
-        pthread_create(&g_thread_server, NULL, g_thread_server_func, &data);
-        pthread_setname_np(g_thread_server, "g_thread_server_func");
+        pthread_create(    &multilink->server_thread, NULL, server_func, &data);
+        pthread_setname_np( multilink->server_thread, "server_func");
          // pthread_join(g_thread_server, NULL);
-        pthread_detach(g_thread_server);
+        pthread_detach(multilink->server_thread);
         fprintf(stderr,"after pthread_detach\n");
     }
 }
