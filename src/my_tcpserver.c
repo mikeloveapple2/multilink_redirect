@@ -70,12 +70,19 @@ void* server_func(void* arg)
             default : {
                           if(FD_ISSET(data->fd, &fds)){
                               if(read( data->fd , read_buf, 1) > 0){
-                                  if(read_buf[0] == 'o'){
-                                      puts("recv X command");
+                                  if(read_buf[0] == 's'){
+                                      puts("recv s command");
                                       new_serial_thread();
-                                  }else if(read_buf[0] == 'Z'){
+                                  }else if(read_buf[0] == 'a'){
+                                      const char* ttyusb_path = "/dev/ttyUSB0";
+                                      int baudrate          = 115200;
+                                      memcpy(multilink->props.serial_path, ttyusb_path, strlen(ttyusb_path));
+                                      multilink->props.serial_baud = baudrate;
+                                      multilink->status.serial_status = INIT_STATUS;
+
+                                  }else if(read_buf[0] == 'z'){
                                       new_tcp_thread();
-                                  }else if(read_buf[0] == 'V'){
+                                  }else if(read_buf[0] == 'v'){
                                       printf("Server init the tcp_thread %d\n", multilink->status.tcp_status);
                                       char* target_buf = multilink->props.tcp_addr;
                                       const char* test_ip = "localhost";
@@ -84,8 +91,6 @@ void* server_func(void* arg)
                                       printf("tcp -> %s:%d\n", multilink->props.tcp_addr, multilink->props.tcp_port);
                                       multilink->status.tcp_status = INIT_STATUS;
                                       printf("Server after init the status : %d\n", multilink->status.tcp_status);
-                                  }else if(read_buf[0] == 'c'){
-                                      printf("multilink at %x the TCP current status : %d\n", multilink,  multilink->status.tcp_status);
                                   }
 #if DEBUG_SERVER_OUTPUT > 0
                                   printf("0x%X ", read_buf[0]);

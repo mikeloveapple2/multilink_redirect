@@ -251,6 +251,7 @@ void checkSerialExist()
 
 void serial_init_handle()
 {
+    printf("serial_init_handle()\n");
     multilink_data_t* multilink = get_multilink_data();
     const char* serial_path = multilink->props.serial_path;
     int         baudrate    = multilink->props.serial_baud;
