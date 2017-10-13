@@ -92,6 +92,9 @@ void tcp_start(int fd)
 #if DEBUG_TCP_RECV > 0
                                   printf("tcp recv: 0x%X\n", read_buf[0]);
 #endif
+                                  if(recv_link_data){
+                                      recv_link_data(read_buf[0]);
+                                  }
                               }else{
                                   fprintf(stderr, "noting to read\n");
                                   run  = false;

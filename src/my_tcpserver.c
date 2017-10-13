@@ -36,6 +36,11 @@ typedef struct _thread_data {
     int fd;
 }thread_data;
 
+void link_callback(char dat)
+{
+    //printf("link_callback -> %c", dat);
+}
+
 
 void* server_func(void* arg)
 {
@@ -114,9 +119,10 @@ void* server_func(void* arg)
 } // server_func
 
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
     init_multilink();
+    recv_link_data = &link_callback;
 
     int parentfd; /* parent socket */
     int childfd; /* child socket */
@@ -127,7 +133,6 @@ int main(int argc, char **argv) {
     struct hostent *hostp; /* client host info */
     char *hostaddrp; /* dotted decimal host addr string */
     int optval; /* flag value for setsockopt */
-
 
     /* 
      * check command line arguments 

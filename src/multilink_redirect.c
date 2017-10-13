@@ -34,5 +34,7 @@ void init_multilink()
 {
     g_multilink = malloc(sizeof(multilink_data_t));
     memset(g_multilink, 0, sizeof(g_multilink));
+
+    recv_link_data = NULL;
 }
 

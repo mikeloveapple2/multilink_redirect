@@ -223,6 +223,9 @@ void start(int fd)
 #if DEBUG_SERIAL_RECV > 0
                                   printf("%c", read_buf[0]);
                                   fflush(stdout);
+                                  if(recv_link_data){
+                                      recv_link_data(read_buf[0]);
+                                  }
 #endif
                                  // emit bytesReceived(data);
                              }else{

@@ -56,5 +56,8 @@ void init_multilink();
 void new_serial_thread();
 void new_tcp_thread();
 
+void (*recv_link_data)(char c);
+
+
 #endif  //__MULTILINK_REDIRECT_H__
 
