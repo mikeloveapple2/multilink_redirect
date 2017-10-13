@@ -70,11 +70,22 @@ void* server_func(void* arg)
             default : {
                           if(FD_ISSET(data->fd, &fds)){
                               if(read( data->fd , read_buf, 1) > 0){
-                                  if(read_buf[0] == 'X'){
+                                  if(read_buf[0] == 'o'){
                                       puts("recv X command");
-                                      new_serial_thread("/dev/ttyUSB0", 115200);
+                                      new_serial_thread();
                                   }else if(read_buf[0] == 'Z'){
-                                      new_tcp_thread("localhost", 1522);
+                                      new_tcp_thread();
+                                  }else if(read_buf[0] == 'V'){
+                                      printf("Server init the tcp_thread %d\n", multilink->status.tcp_status);
+                                      char* target_buf = multilink->props.tcp_addr;
+                                      const char* test_ip = "localhost";
+                                      memcpy(target_buf, test_ip, strlen(test_ip));
+                                      multilink->props.tcp_port = 1522;
+                                      printf("tcp -> %s:%d\n", multilink->props.tcp_addr, multilink->props.tcp_port);
+                                      multilink->status.tcp_status = INIT_STATUS;
+                                      printf("Server after init the status : %d\n", multilink->status.tcp_status);
+                                  }else if(read_buf[0] == 'c'){
+                                      printf("multilink at %x the TCP current status : %d\n", multilink,  multilink->status.tcp_status);
                                   }
 #if DEBUG_SERVER_OUTPUT > 0
                                   printf("0x%X ", read_buf[0]);
@@ -99,6 +110,9 @@ void* server_func(void* arg)
 
 
 int main(int argc, char **argv) {
+
+    init_multilink();
+
     int parentfd; /* parent socket */
     int childfd; /* child socket */
     int portno; /* port to listen on */

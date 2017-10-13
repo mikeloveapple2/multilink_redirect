@@ -71,18 +71,16 @@ void tcp_start(int fd)
         timeout.tv_usec = 0;
 
         int ret = select( _fd + 1, &fds, NULL, NULL, &timeout);
-        fprintf(stdout, "tcp select return ret(%d)\n", ret);
         switch(ret){
-            fprintf(stdout, "tcp select return ret(%d)\n", ret);
             case -1 : {
-                          printf("tcp network error");
+                          printf("tcp network error\n");
                           run = false;
                           tcp_timeout_handle();
                           close(_fd);
                           break;
                       }
             case 0 : {
-                         printf("tcp network timeout");
+                         printf("tcp network timeout\n");
                          run  = false;
                          tcp_timeout_handle();
                          close(_fd);
@@ -95,13 +93,13 @@ void tcp_start(int fd)
                                   printf("tcp recv: 0x%X\n", read_buf[0]);
 #endif
                               }else{
-                                  fprintf(stderr, "noting to read");
+                                  fprintf(stderr, "noting to read\n");
                                   run  = false;
                                   tcp_timeout_handle();
                                   close(_fd);
                               }
                           }else{
-                                  fprintf(stderr, "! FD_ISSET");
+                                  fprintf(stderr, "! FD_ISSET\n");
                                   run  = false;
                                   tcp_timeout_handle();
                                   close(_fd);
@@ -118,8 +116,10 @@ void tcp_start(int fd)
 
 void tcp_init_handle()
 {
+    printf("tcp_init_handle()\n");
+    fflush(stdout);
     multilink_data_t* multilink = get_multilink_data();
-    const char* addr = multilink->props.tcp_add;
+    const char* addr = multilink->props.tcp_addr;
     int         port = multilink->props.tcp_port;
     struct sockaddr_in serveraddr;
 
@@ -141,7 +141,7 @@ void tcp_init_handle()
             serveraddr.sin_port = htons(port);
 
             if(connect(sock_fd, &serveraddr, sizeof(serveraddr)) < 0){
-                fprintf(stderr, "ERROR connecting");
+                fprintf(stderr, "ERROR connecting\n");
                 multilink->status.tcp_status = WAITING_STATUS;
             }else{
                 multilink->tcp_fd = sock_fd;
@@ -163,6 +163,7 @@ void tcp_running_handle()
 
 void tcp_waiting_handle()
 {
+    printf("tcp waitting handle\n");
     sleep(1);
 }
 

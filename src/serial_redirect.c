@@ -275,6 +275,7 @@ void serial_running_handle()
 
 void serial_waiting_handle()
 {
+    printf("waiting serial handle\n");
     sleep(1);
 }
 

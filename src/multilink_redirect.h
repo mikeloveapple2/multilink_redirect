@@ -1,6 +1,7 @@
 #ifndef __MULTILINK_REDIRECT_H__
 #define __MULTILINK_REDIRECT_H__
 
+#include <assert.h>
 #include <pthread.h>
 
 #define PATH_LEN   (64)
@@ -23,7 +24,7 @@ typedef struct _multilink_property {
     char serial_path[PATH_LEN];
     int  serial_baud;
 
-    char tcp_add[PATH_LEN];
+    char tcp_addr[PATH_LEN];
     int  tcp_port;
 }multilink_property_t;
 
@@ -43,11 +44,14 @@ typedef struct _multilink_data {
 } multilink_data_t;
 
 
-static multilink_data_t g_multilink;
+multilink_data_t* g_multilink;
 
 static multilink_data_t* get_multilink_data(){
-    return &g_multilink;
+    assert(g_multilink);
+    return g_multilink;
 }
+
+void init_multilink();
 
 void new_serial_thread();
 void new_tcp_thread();
