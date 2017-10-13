@@ -41,7 +41,7 @@ void* server_func(void* arg)
 {
     thread_data* data = (thread_data*)arg;
     printf("recv count : %d\n", data->count);
-    multilink_data* multilink = get_multilink_data();
+    multilink_data_t* multilink = get_multilink_data();
     
     bool run = true;
     while(run){
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
         if (childfd < 0) 
             error("ERROR on accept");
 
-        multilink_data* multilink = get_multilink_data();
+        multilink_data_t* multilink = get_multilink_data();
         multilink->server_fd = childfd;
         /* 
          * gethostbyaddr: determine who sent the message 

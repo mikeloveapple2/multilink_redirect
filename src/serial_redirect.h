@@ -1,11 +1,6 @@
 #ifndef __SERIAL_REDIRECT__
 #define __SERIAL_REDIRECT__
 
-typedef struct _serial_data {
-    char filepath[64]; // eg. /dev/ttyUSB0
-    int  baudrate;
-} serial_data;
-
 // return file descriptor
 int init_uart(const char* port, int baud);
 
@@ -18,5 +13,9 @@ void start(int fd);
 // foolish
 void checkSerialExist();
 
+void serial_init_handle();
+void serial_running_handle();
+void serial_waiting_handle();
+void serial_timeout_handle();
 
 #endif //__SERIAL_REDIRECT__

@@ -152,27 +152,34 @@ int setup_uart(int fd, int baud)
 
 void* serial_thread_func(void* arg)
 {
-    serial_data* data = (serial_data*)arg;
-    const char* serial_path = data->filepath;
-    int         baudrate    = data->baudrate;
 
+    multilink_data_t* multilink = get_multilink_data();
     pthread_setname_np(pthread_self(), "serial_thread");
 
-    printf("prepare %s, %d\n", serial_path, baudrate);
-    int serial_fd = init_uart(serial_path, baudrate);
-    multilink_data* multilink = get_multilink_data();
-    if( serial_fd > -1 ){
-        // send heartbeat
-        // send data_stream
-        //
-        multilink->serial_fd = serial_fd;
-        start(serial_fd);
-    }else{
-        multilink->serial_fd = -1;
-        perror("init uart error");
-    }
+    bool event_loop_run = true;
+    link_status_t current_status = multilink->status.serial_status;
 
-    sleep(5);
+    while(event_loop_run){
+        current_status = multilink->status.serial_status;
+        switch(current_status){
+            case RUNNING_STATUS:{
+                                    serial_running_handle();
+                                    break;
+                                }
+            case INIT_STATUS:{
+                                 serial_init_handle();
+                                 break;
+                             }
+
+            case WAITING_STATUS:
+            default            :{
+                                    serial_waiting_handle();
+                                    break;
+                                }
+        }// switch current_status
+        usleep(100);
+    }// while
+
     pthread_exit(NULL);
 }
 
@@ -181,7 +188,7 @@ void start(int fd)
 {
     bool run = true;
     int  _fd = fd;
-    multilink_data* multilink = get_multilink_data();
+    multilink_data_t* multilink = get_multilink_data();
     while(run){
         // read Serial
         fd_set fds;							//文件描述符集合
@@ -190,7 +197,7 @@ void start(int fd)
         FD_ZERO(&fds);				        //清空集合
         FD_SET(_fd, &fds);		            //添加文件描述符入集合
 
-        timeout.tv_sec = 25;		            //设置阻塞超时时间，5秒
+        timeout.tv_sec = 5;		            //设置阻塞超时时间，5秒
         timeout.tv_usec = 0;
         int ret = select(_fd + 1, &fds, NULL, NULL, &timeout);
         switch( ret )
@@ -199,16 +206,14 @@ void start(int fd)
             case -1: {
                          fprintf(stderr, "serial select error !\n");
                          run = false;
-                         multilink->serial_fd = -1;
-                         // emit disConnected();
+                         serial_timeout_handle();
                          break;
                      }
                      //超时，断开串口连接
             case 0: {
                         fprintf(stderr, "serial select timeout\n");
                         run = false;
-                        multilink->serial_fd = -1;
-                        // emit disConnected();
+                        serial_timeout_handle();
                         break;
                     }
                     //有可读的数据
@@ -220,8 +225,16 @@ void start(int fd)
                                   fflush(stdout);
 #endif
                                  // emit bytesReceived(data);
-                             }
-                         } // FD_ISSET
+                             }else{
+                                 fprintf(stderr, "!read failed");
+                                 run = false;
+                                 serial_timeout_handle();
+                             } // if read
+                         }else{
+                                 fprintf(stderr, "!FD_ISSET");
+                                 run = false;
+                                 serial_timeout_handle();
+                         } // if FD_ISSET
                          break;
                      } 
         }// switch ret
@@ -236,3 +249,42 @@ void checkSerialExist()
 
 }
 
+void serial_init_handle()
+{
+    multilink_data_t* multilink = get_multilink_data();
+    const char* serial_path = multilink->props.serial_path;
+    int         baudrate    = multilink->props.serial_baud;
+
+    printf("prepare %s, %d\n", serial_path, baudrate);
+    int serial_fd = init_uart(serial_path, baudrate);
+    if( serial_fd > -1 ){
+        multilink->serial_fd = serial_fd;
+        multilink->status.serial_status = RUNNING_STATUS;
+    }else{
+        multilink->serial_fd = -1;
+        perror("init uart error");
+        multilink->status.serial_status = WAITING_STATUS;
+    }
+}
+
+void serial_running_handle()
+{
+    multilink_data_t* multilink = get_multilink_data();
+    start(multilink->serial_fd);
+}
+
+void serial_waiting_handle()
+{
+    sleep(1);
+}
+
+void serial_timeout_handle()
+{
+    multilink_data_t* multilink = get_multilink_data();
+    if(multilink->serial_fd > -1){
+        close(multilink->serial_fd);
+    }
+
+    multilink->serial_fd = -1;
+    multilink->status.serial_status = WAITING_STATUS;
+}
