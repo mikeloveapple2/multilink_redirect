@@ -56,17 +56,14 @@ void* server_func(void* arg)
 
 
     char* target_buf = multilink->props.tcp_addr;
-    //const char* test_ip = "localhost";
-    const char* test_ip = "192.168.192.72";
+    const char* test_ip = "localhost";
     memcpy(target_buf, test_ip, strlen(test_ip));
-    //multilink->props.tcp_port = 1522;
+    multilink->props.tcp_port = 1522;
     multilink->props.tcp_port = 6667;
     multilink->status.tcp_status = INIT_STATUS;
 
-    // const char* ttyusb_path = "/dev/ttyUSB0";
-    // int baudrate          = 115200;
     const char* ttyusb_path = "/dev/ttyUSB0";
-    int baudrate          = 57600;
+    int baudrate          = 115200;
     memcpy(multilink->props.serial_path, ttyusb_path, strlen(ttyusb_path));
     multilink->props.serial_baud = baudrate;
     multilink->status.serial_status = INIT_STATUS;
