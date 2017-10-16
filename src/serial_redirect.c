@@ -18,7 +18,7 @@
 #include <termios.h>
 #include <pthread.h>
 
-#define   DEBUG_SERIAL_RECV (1)
+#define   DEBUG_SERIAL_RECV (0)
 
 int init_uart(const char* port, int baud)
 {
@@ -223,11 +223,10 @@ void start(int fd)
 #if DEBUG_SERIAL_RECV > 0
                                   printf("%c", read_buf[0]);
                                   fflush(stdout);
-                                  if(recv_link_data){
-                                      recv_link_data(read_buf[0]);
-                                  }
 #endif
-                                 // emit bytesReceived(data);
+                                  if(multilink->serial_recv_callback){
+                                      multilink->serial_recv_callback(read_buf[0]);
+                                  }
                              }else{
                                  fprintf(stderr, "!read failed");
                                  run = false;

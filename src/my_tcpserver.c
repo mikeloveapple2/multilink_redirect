@@ -36,17 +36,38 @@ typedef struct _thread_data {
     int fd;
 }thread_data;
 
-void link_callback(char dat)
+void tcp_callback(char dat)
 {
-    printf("link_callback -> %c", dat);
+    recv_byte(get_multilink_data()->tcp_fd, dat);
+    // printf("tcp -> %c", dat);
 }
 
+void serial_callback(char dat)
+{
+    recv_byte(get_multilink_data()->serial_fd, dat);
+    // printf("serial -> %c", dat);
+}
 
 void* server_func(void* arg)
 {
     thread_data* data = (thread_data*)arg;
     printf("recv count : %d\n", data->count);
     multilink_data_t* multilink = get_multilink_data();
+
+    new_serial_thread();
+    new_tcp_thread();
+
+    char* target_buf = multilink->props.tcp_addr;
+    const char* test_ip = "localhost";
+    memcpy(target_buf, test_ip, strlen(test_ip));
+    multilink->props.tcp_port = 1522;
+    multilink->status.tcp_status = INIT_STATUS;
+
+    const char* ttyusb_path = "/dev/ttyUSB0";
+    int baudrate          = 115200;
+    memcpy(multilink->props.serial_path, ttyusb_path, strlen(ttyusb_path));
+    multilink->props.serial_baud = baudrate;
+    multilink->status.serial_status = INIT_STATUS;
     
     bool run = true;
     while(run){
@@ -75,28 +96,7 @@ void* server_func(void* arg)
             default : {
                           if(FD_ISSET(data->fd, &fds)){
                               if(read( data->fd , read_buf, 1) > 0){
-                                  if(read_buf[0] == 's'){
-                                      puts("recv s command");
-                                      new_serial_thread();
-                                  }else if(read_buf[0] == 'a'){
-                                      const char* ttyusb_path = "/dev/ttyUSB0";
-                                      int baudrate          = 115200;
-                                      memcpy(multilink->props.serial_path, ttyusb_path, strlen(ttyusb_path));
-                                      multilink->props.serial_baud = baudrate;
-                                      multilink->status.serial_status = INIT_STATUS;
-
-                                  }else if(read_buf[0] == 'z'){
-                                      new_tcp_thread();
-                                  }else if(read_buf[0] == 'v'){
-                                      printf("Server init the tcp_thread %d\n", multilink->status.tcp_status);
-                                      char* target_buf = multilink->props.tcp_addr;
-                                      const char* test_ip = "localhost";
-                                      memcpy(target_buf, test_ip, strlen(test_ip));
-                                      multilink->props.tcp_port = 1522;
-                                      printf("tcp -> %s:%d\n", multilink->props.tcp_addr, multilink->props.tcp_port);
-                                      multilink->status.tcp_status = INIT_STATUS;
-                                      printf("Server after init the status : %d\n", multilink->status.tcp_status);
-                                  }
+                                  write_byte(&read_buf[0], 1);
 #if DEBUG_SERVER_OUTPUT > 0
                                   printf("0x%X ", read_buf[0]);
                                   printf("\n");
@@ -122,7 +122,8 @@ void* server_func(void* arg)
 int main(int argc, char **argv)
 {
     init_multilink();
-    recv_link_data = &link_callback;
+    get_multilink_data()->tcp_recv_callback = tcp_callback;
+    get_multilink_data()->serial_recv_callback = serial_callback;
 
     int parentfd; /* parent socket */
     int childfd; /* child socket */

@@ -42,6 +42,10 @@ typedef struct _multilink_data {
 
     multilink_status_t   status;
     multilink_property_t props;
+
+    void (*tcp_recv_callback)(char c);
+    void (*serial_recv_callback)(char c);
+    void (*p2p_recv_callback)(char c);
 } multilink_data_t;
 
 
@@ -57,8 +61,9 @@ void init_multilink();
 void new_serial_thread();
 void new_tcp_thread();
 
-void (*recv_link_data)(char c);
+void write_byte(const void* buf, size_t count);
 
+void recv_byte(int fd, char c);
 
 #endif  //__MULTILINK_REDIRECT_H__
 

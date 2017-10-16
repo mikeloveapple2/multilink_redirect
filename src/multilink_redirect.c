@@ -34,6 +34,39 @@ void init_multilink()
     g_multilink = malloc(sizeof(multilink_data_t));
     memset(g_multilink, 0, sizeof(g_multilink));
 
-    recv_link_data = NULL;
+    g_multilink->tcp_recv_callback = NULL;
+    g_multilink->serial_recv_callback = NULL;
+    g_multilink->p2p_recv_callback = NULL;
 }
 
+void write_byte(const void* buf, size_t count)
+{
+    multilink_data_t* multilink = get_multilink_data();
+    if( multilink-> p2p_fd > -1 ){
+        write(multilink->p2p_fd, buf, count);
+    }
+
+    if( multilink->tcp_fd > -1 ){
+        write(multilink->tcp_fd, buf, count);
+    }
+    if( multilink-> serial_fd > -1 ){
+        write(multilink->serial_fd, buf, count);
+    }
+}
+
+void recv_byte(int fd, char c)
+{
+    multilink_data_t* multilink = get_multilink_data();
+    char bar = c;
+    if(fd == multilink->serial_fd){
+
+    }else if(fd == multilink->tcp_fd){
+
+    }else if(fd == multilink->p2p_fd){
+
+    }
+    
+    if(multilink->server_fd > -1){
+        write(multilink->server_fd, &bar, 1);
+    }
+}
