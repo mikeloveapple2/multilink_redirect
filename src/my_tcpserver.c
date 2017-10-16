@@ -38,7 +38,7 @@ typedef struct _thread_data {
 
 void link_callback(char dat)
 {
-    //printf("link_callback -> %c", dat);
+    printf("link_callback -> %c", dat);
 }
 
 
@@ -56,7 +56,7 @@ void* server_func(void* arg)
         FD_ZERO(&fds);
         FD_SET(data->fd, &fds);
 
-        timeout.tv_sec = 3;
+        timeout.tv_sec = WAIT_DATA_TIMEOUT;
         timeout.tv_usec = 0;
         int ret = select(data->fd + 1, &fds, NULL, NULL, &timeout);
         switch(ret){

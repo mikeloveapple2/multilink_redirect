@@ -5,6 +5,7 @@
 #include <pthread.h>
 
 #define PATH_LEN   (64)
+#define WAIT_DATA_TIMEOUT  (120)
 
 typedef enum _link_status_t {
     WAITING_STATUS,

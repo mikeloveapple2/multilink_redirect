@@ -197,7 +197,7 @@ void start(int fd)
         FD_ZERO(&fds);				        //清空集合
         FD_SET(_fd, &fds);		            //添加文件描述符入集合
 
-        timeout.tv_sec = 5;		            //设置阻塞超时时间，5秒
+        timeout.tv_sec = WAIT_DATA_TIMEOUT;
         timeout.tv_usec = 0;
         int ret = select(_fd + 1, &fds, NULL, NULL, &timeout);
         switch( ret )

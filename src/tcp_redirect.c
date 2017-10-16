@@ -67,7 +67,7 @@ void tcp_start(int fd)
         FD_ZERO(&fds);
         FD_SET(_fd, &fds);
 
-        timeout.tv_sec  = 3;
+        timeout.tv_sec  = WAIT_DATA_TIMEOUT;
         timeout.tv_usec = 0;
 
         int ret = select( _fd + 1, &fds, NULL, NULL, &timeout);

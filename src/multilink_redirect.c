@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 void new_serial_thread()
 {
     puts("init new_serial_thread");
