@@ -54,17 +54,19 @@ void* server_func(void* arg)
     printf("recv count : %d\n", data->count);
     multilink_data_t* multilink = get_multilink_data();
 
-    new_serial_thread();
-    new_tcp_thread();
 
     char* target_buf = multilink->props.tcp_addr;
-    const char* test_ip = "localhost";
+    //const char* test_ip = "localhost";
+    const char* test_ip = "192.168.192.72";
     memcpy(target_buf, test_ip, strlen(test_ip));
-    multilink->props.tcp_port = 1522;
+    //multilink->props.tcp_port = 1522;
+    multilink->props.tcp_port = 6667;
     multilink->status.tcp_status = INIT_STATUS;
 
+    // const char* ttyusb_path = "/dev/ttyUSB0";
+    // int baudrate          = 115200;
     const char* ttyusb_path = "/dev/ttyUSB0";
-    int baudrate          = 115200;
+    int baudrate          = 57600;
     memcpy(multilink->props.serial_path, ttyusb_path, strlen(ttyusb_path));
     multilink->props.serial_baud = baudrate;
     multilink->status.serial_status = INIT_STATUS;
@@ -192,6 +194,9 @@ int main(int argc, char **argv)
      * then close connection.
      */
     clientlen = sizeof(clientaddr);
+
+    new_serial_thread();
+    new_tcp_thread();
     while (1) {
 
         /* 
